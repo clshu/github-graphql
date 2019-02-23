@@ -33,19 +33,9 @@ class App extends Component {
   }
 
   onFetchFromGitHub = path => {
-    const [organization, repository] = path.split("/")
-
-    axiosGitHubGraphQL
-      .post('', {
-        query: getIssuesOfRepositoryQuery(organization, repository)
-      })
-      .then(result =>
-        this.setState(
-          {
-            organization: result.data.data.organization
-          }
-        )
-      )
+    getIssuesOfRepository(path).then(queryResult =>
+      this.setState(resolveIssuesQuery(queryResult)),
+    )
   }
 
 
@@ -112,20 +102,36 @@ const Repository = ({ repository }) => (
   </div>
 );
 
-const getIssuesOfRepositoryQuery = (organization, repository) => `
-{
- organization(login: "${organization}") {
-    name
-    url
-    repository(name: "${repository}") {
-       name
-       url
-       issues(last: 5) {
+const getIssuesOfRepository = path => {
+  const [organization, repository] = path.split("/")
+
+  return axiosGitHubGraphQL.post('', {
+    query: GET_ISSUES_OF_REPOSITORY,
+    variables: { organization, repository },
+  })
+
+}
+
+const resolveIssuesQuery = queryResult => () => ({
+  organization: queryResult.data.data.organization,
+  errors: queryResult.data.errors,
+})
+
+const GET_ISSUES_OF_REPOSITORY = `
+  query ($organization: String!, $repository: String!) {
+    organization(login: $organization) {
+      name
+      url
+      repository(name: $repository) {
+        name
+        url
+        issues(last: 5) {
           edges { node {
-            id title url
-            } }
+              id
+              title
+              url }
         } }
-} }
-`;
+    } }
+  }`
 
 export default App
