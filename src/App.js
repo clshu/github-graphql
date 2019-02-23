@@ -40,13 +40,21 @@ class App extends Component {
   onFetchFromGitHub = () => {
     axiosGitHubGraphQL
       .post('', { query: GET_ORGANIZATION })
-      .then(result => console.log(result));
+      .then(result =>
+        this.setState(
+          {
+            organization: result.data.data.organization
+          }
+        )
+      )
   }
 
 
   render() {
-    const { path, organization } = this.state;
-
+    const { path, organization, errors } = this.state;
+    if (!organization) {
+      return <div>Loading....</div>
+    }
     return (
       <div>
         <h1>{TITLE}</h1>
@@ -62,19 +70,29 @@ class App extends Component {
           <button type="submit">Search</button>
         </form>
         <hr />
-        <Organization organization={organization} />
+        <Organization organization={organization} errors={errors} />
       </div>
     );
   }
 }
 
-const Organization = ({ organization }) => (
-  <div>
-    <p>
-      <strong>Issues from Organization:</strong>
-      <a href={organization.url}>{organization.name}</a>
-    </p>
-  </div>
-)
+const Organization = ({ organization, errors }) => {
+  if (errors) {
+    return (
+      <p>
+        <strong>Something went wrong:</strong>
+        {errors.map(error => error.message).join(' ')}
+      </p>
+    );
+  }
+  return (
+    <div>
+      <p>
+        <strong>Issues from Organization:</strong>
+        <a href={organization.url}>{organization.name}</a>
+      </p>
+    </div>
+  )
+}
 
 export default App
