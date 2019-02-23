@@ -11,35 +11,34 @@ const axiosGitHubGraphQL = axios.create({
   }
 })
 
-const GET_ORGANIZATION = ` {
-  organization(login: "the-road-to-learn-react") {
-    name
-url }
-} `
-
 class App extends Component {
   state = {
     path: 'the-road-to-learn-react/the-road-to-learn-react',
     organization: null,
     errors: null
-  };
+  }
 
   componentDidMount() {
     // fetch data
-    this.onFetchFromGitHub()
+    this.onFetchFromGitHub(this.state.path)
   }
   onChange = event => {
     this.setState({ path: event.target.value });
-  };
+  }
 
   onSubmit = event => {
     // fetch data
-    event.preventDefault();
-  };
+    this.onFetchFromGitHub(this.state.path)
+    event.preventDefault()
+  }
 
-  onFetchFromGitHub = () => {
+  onFetchFromGitHub = path => {
+    const [organization, repository] = path.split("/")
+
     axiosGitHubGraphQL
-      .post('', { query: GET_ORGANIZATION })
+      .post('', {
+        query: getIssuesOfRepositoryQuery(organization, repository)
+      })
       .then(result =>
         this.setState(
           {
@@ -52,8 +51,9 @@ class App extends Component {
 
   render() {
     const { path, organization, errors } = this.state;
+    console.log(organization)
     if (!organization) {
-      return <div>Loading....</div>
+      return <div></div>
     }
     return (
       <div>
@@ -91,8 +91,41 @@ const Organization = ({ organization, errors }) => {
         <strong>Issues from Organization:</strong>
         <a href={organization.url}>{organization.name}</a>
       </p>
+      <Repository repository={organization.repository} />
+
     </div>
   )
 }
+
+const Repository = ({ repository }) => (
+  <div>
+    <p>
+      <strong>In Repository:</strong>
+      <a href={repository.url}>{repository.name}</a>
+    </p>
+    <ul>
+      {repository.issues.edges.map(issue => (
+        <li key={issue.node.id}>
+          <a href={issue.node.url}>{issue.node.title}</a>
+        </li>))}
+    </ul>
+  </div>
+);
+
+const getIssuesOfRepositoryQuery = (organization, repository) => `
+{
+ organization(login: "${organization}") {
+    name
+    url
+    repository(name: "${repository}") {
+       name
+       url
+       issues(last: 5) {
+          edges { node {
+            id title url
+            } }
+        } }
+} }
+`;
 
 export default App
