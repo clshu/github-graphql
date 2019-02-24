@@ -1,3 +1,7 @@
+##
+This project uses HTTP Post method to send GraphQL to GitHub GraphQL API. It does query and mutation
+
+
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts
